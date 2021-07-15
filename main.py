@@ -10,31 +10,6 @@ import random
 import string
 import uuid
 
-# TEST CODE
-
-# def hello_world(request):
-#     """HTTP Cloud Function.
-#     Args:
-#         request (flask.Request): The request object.
-#         <http://flask.pocoo.org/docs/1.0/api/#flask.Request>
-#     Returns:
-#         The response text, or any set of values that can be turned into a
-#         Response object using `make_response`
-#         <http://flask.pocoo.org/docs/1.0/api/#flask.Flask.make_response>.
-#     """
-
-#     config = {
-#     "apiKey": "AIzaSyD_KRudQoelHynQmxwxb_HqgBj6lx0TqWU",
-#     "authDomain":"25787380523-8l83kcv1gq70g083tc8bbjl9j00oingd.apps.googleusercontent.com",  
-#     "databaseURL": "https://cloud-function-learn-318812-default-rtdb.firebaseio.com/",
-#     "storageBucket": "cloud-function-learn-318812.appspot.com" 
-#      }
-    
-#     firebase = pyrebase.initialize_app(config)
-#     db = firebase.database()
-    
-#     result =db.child("schedule").get()
-#     return result.val()
 
 # Code for APP
 
@@ -52,7 +27,6 @@ def get_started(request):
     if request_args and  "authorization_code" in request_args:
         CODE = request_args["authorization_code"]
         vehicle_token = get_access_token(CODE)
-        print(vehicle_token)
         REFRESH_TOKEN = vehicle_token['REFRESH_TOKEN']
         client_token = create_client_token()
     if vehicle_token is not None:
@@ -132,15 +106,16 @@ def get_vehicle_info(ACCESS_TOKEN):
     return vehicle_info   
 
 
-
-def save_vehicle(client_token,refresh_token):
-    config = {
-    "apiKey": "AIzaSyD_KRudQoelHynQmxwxb_HqgBj6lx0TqWU",
+config = {
+    "apiKey": get_secrets("firebase_apikey"),
     "authDomain":"25787380523-8l83kcv1gq70g083tc8bbjl9j00oingd.apps.googleusercontent.com",  
     "databaseURL": "https://cloud-function-learn-318812-default-rtdb.firebaseio.com/",
     "storageBucket": "cloud-function-learn-318812.appspot.com" 
      }
-    firebase = pyrebase.initialize_app(config)
+firebase = pyrebase.initialize_app(config)
+
+def save_vehicle(client_token,refresh_token):
+    
     db = firebase.database()
     result=db.child("vehicle").child(client_token).get()
     if result.val() is not None:
@@ -153,12 +128,6 @@ def save_vehicle(client_token,refresh_token):
 
 def get_refresh_token(client_token):
 
-    config = {
-    "apiKey": "AIzaSyD_KRudQoelHynQmxwxb_HqgBj6lx0TqWU",
-    "authDomain":"25787380523-8l83kcv1gq70g083tc8bbjl9j00oingd.apps.googleusercontent.com",  
-    "databaseURL": "https://cloud-function-learn-318812-default-rtdb.firebaseio.com/",
-    "storageBucket": "cloud-function-learn-318812.appspot.com" 
-     }
     firebase = pyrebase.initialize_app(config)
     db = firebase.database()
     token=db.child("vehicle").child(client_token).get()  
@@ -209,8 +178,4 @@ def access_refresh(refresh_token):
         return data
     else:
         return None
-
-
-
-    
 
