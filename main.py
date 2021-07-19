@@ -3,7 +3,6 @@
 from google.cloud import secretmanager
 import http.client
 import json
-import pprint
 import os
 import pyrebase
 import random
@@ -13,6 +12,16 @@ import uuid
 
 # Code for APP
 
+config = {
+    "apiKey": get_secrets("firebase_apikey"),
+    "authDomain":"25787380523-8l83kcv1gq70g083tc8bbjl9j00oingd.apps.googleusercontent.com",  
+    "databaseURL": "https://cloud-function-learn-318812-default-rtdb.firebaseio.com/",
+    "storageBucket": "cloud-function-learn-318812.appspot.com" 
+     }
+firebase = pyrebase.initialize_app(config)
+
+
+#end point for frond end time to call they can send client_token(regular user) and authorization_code(first time user) 
 def get_started(request):
 
     request_args = request.get_json(silent=True)
@@ -43,7 +52,7 @@ def get_started(request):
         return {"error":"authorization code wrong or issue with api"}
 
 
-
+# this function will return client secrets which has been saved in secrete manager
 def get_secrets(secret_name):
     project_id = "cloud-function-learn-318812"
     client = secretmanager.SecretManagerServiceClient()
@@ -53,7 +62,7 @@ def get_secrets(secret_name):
     return my_secret_value
 
 
-
+# this function will return access token and refresh token by using authorization code in api call
 def get_access_token(CODE):
     
     CLIENT_ID = get_secrets("CLIENT_ID")
@@ -75,11 +84,7 @@ def get_access_token(CODE):
         return None
 
 
-
-
-       
-
-
+# this function will return vehicle informatio by using access token in api call
 def get_vehicle_info(ACCESS_TOKEN):
     conn = http.client.HTTPSConnection("api.mps.ford.com")
     headers = {
@@ -88,10 +93,8 @@ def get_vehicle_info(ACCESS_TOKEN):
                 'api-version' : "2020-06-01"
         }
         
-    vehicles = get_vehical_list(ACCESS_TOKEN)
-        
+    vehicles = get_vehical_list(ACCESS_TOKEN)   
     vehicle_info=[]
-    
     for vehicle in vehicles:
         vehicleid=vehicle["vehicleId"]
         conn.request("GET", f"/api/fordconnect/vehicles/v1/{vehicleid}", headers=headers)
@@ -106,14 +109,7 @@ def get_vehicle_info(ACCESS_TOKEN):
     return vehicle_info   
 
 
-config = {
-    "apiKey": get_secrets("firebase_apikey"),
-    "authDomain":"25787380523-8l83kcv1gq70g083tc8bbjl9j00oingd.apps.googleusercontent.com",  
-    "databaseURL": "https://cloud-function-learn-318812-default-rtdb.firebaseio.com/",
-    "storageBucket": "cloud-function-learn-318812.appspot.com" 
-     }
-firebase = pyrebase.initialize_app(config)
-
+#save client token and refresh token in firebase
 def save_vehicle(client_token,refresh_token):
     
     db = firebase.database()
@@ -125,7 +121,7 @@ def save_vehicle(client_token,refresh_token):
         db.child("vehicle").child(client_token).set(data)
 
     
-
+#this function will get refresh token from firebase by using client_token
 def get_refresh_token(client_token):
 
     firebase = pyrebase.initialize_app(config)
@@ -135,8 +131,7 @@ def get_refresh_token(client_token):
     return refresh_token
 
 
-
-
+#this function will return vehicle list by sending acess_token to ford api
 def get_vehical_list(ACCESS_TOKEN):
 
     conn = http.client.HTTPSConnection("api.mps.ford.com")
@@ -152,13 +147,15 @@ def get_vehical_list(ACCESS_TOKEN):
     vehicles = vehicle_dic['vehicles']
     return vehicles
 
+
+#this function will create random client_token 
 def create_client_token():
     
     client_token =  uuid.uuid1() ## make a UUID based on the host ID and current time
     return client_token
 
 
-
+#this function will return access token by using refresh token in api call
 def access_refresh(refresh_token):
 
     CLIENT_ID = get_secrets("CLIENT_ID")
